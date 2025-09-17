@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import Checkbox from 'expo-checkbox';
 
 
 const Data = [
@@ -34,6 +35,11 @@ const Data = [
 
 export default function App() {
 
+
+  const handleDelete = (id) => {
+    Alert.alert("Task ID", `ID: ${id}`);
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.headerCon}>
@@ -60,11 +66,27 @@ export default function App() {
         data={Data}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) =>
-          <View>
-            <Text>{item.task}</Text>
+          <View >
+            <View style={styles.taskCon}>
+              <Checkbox
+                value={item.isDone}
+              />
+              <View style={styles.textCon}>
+                <Text style={[styles.taskText, item.isDone && styles.completedTask]}>{item.task}</Text>
+                <Ionicons name='trash' size={24} color={'red'} onPress={() => handleDelete(item.id)} />
+              </View>
+            </View>
           </View>
         }
       />
+      <View style={styles.addContainer}>
+        <TextInput
+          placeholder='enter your task'
+        />
+        <TouchableOpacity style={styles.addButton}>
+          <Ionicons name='add' size={24} color={'white'} />
+         </TouchableOpacity>
+      </View>
       <StatusBar style="auto" />
     </View>
   );
@@ -95,10 +117,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    marginTop: 10,
+    marginVertical: 10,
     paddingHorizontal: 12,
   },
   searchIcon: {
     marginRight: 8
+  },
+  completedTask: {
+    textDecorationLine: 'line-through'
+  },
+  taskCon: {
+    flexDirection: 'row',
+    gap: 10,
+    marginVertical: 10,
+    alignItems:'center'
+  },
+  taskText: {
+    fontSize: 18
+  },
+  textCon: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems:'center'
+  },
+  addButton:{
+    backgroundColor:'purple',
+    paddingVertical:15,
+    paddingHorizontal:15,
+    borderRadius:20
+  },
+  addContainer:{
+    flexDirection:'row',
+    justifyContent:'space-between'
   }
 });
