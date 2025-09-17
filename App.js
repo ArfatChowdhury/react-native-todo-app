@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Alert, FlatList, Image, Keyboard, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Data = [
@@ -37,10 +37,52 @@ const Data = [
 export default function App() {
 
   const [initial, setInitial] = useState('')
-  const [newData, setNewData] = useState(Data)
+  const [newData, setNewData] = useState([])
 
-  const handleDelete = (id) => {
-    setNewData(newData.filter((item) => item.id !== id))
+
+
+  const clearStorage = async () => {
+    try {
+      await AsyncStorage.removeItem('newTodo');
+      console.log('Storage cleared!');
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+
+  useEffect(()=>{
+    const getTodos = async() =>{
+      // clearStorage()
+      try{
+        const todos = await AsyncStorage.getItem('newTodo')
+        if(todos !== null) {
+          setNewData(JSON.parse(todos))
+        }
+        else {
+          await AsyncStorage.setItem('newTodo', JSON.stringify(Data));
+          setNewData(Data);
+        }
+      }
+      catch(error){
+        console.log(error);
+        
+      }
+    }
+    getTodos()
+  },[])
+
+
+  const handleDelete = async(id) => {
+    try{
+      const newTodo = newData.filter((item) => item.id !== id)
+      await AsyncStorage.setItem('newTodo', JSON.stringify(newTodo))
+      setNewData(newTodo)
+    }catch(error){
+      console.log(error);
+      
+    }
+    
   }
   const handleAddTask = async () => {
 
@@ -52,14 +94,18 @@ export default function App() {
         task: initial,
         isDone: false
       }
-      setNewData([...newData, newTask])
-      await AsyncStorage.setItem('newTodo', JSON.stringify(?))
+      const updatedData = [...newData, newTask]
+      setNewData(updatedData)
+      await AsyncStorage.setItem('newTodo', JSON.stringify(updatedData))
       setInitial('')
       Keyboard.dismiss()
 
     }
+    catch (error) {
+      console.log('Error saving task:', error)  // ✅ Good practice to add error handling
+    }
 
-}
+  }
   return (
     <View style={styles.container}>
       <View style={styles.headerCon}>
