@@ -1,8 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Keyboard, KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
-
+import { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Data = [
   {
@@ -35,11 +36,30 @@ const Data = [
 
 export default function App() {
 
+  const [initial, setInitial] = useState('')
+  const [newData, setNewData] = useState(Data)
 
   const handleDelete = (id) => {
-    Alert.alert("Task ID", `ID: ${id}`);
+    setNewData(newData.filter((item) => item.id !== id))
   }
+  const handleAddTask = async () => {
 
+    if (initial === '') return
+
+    try {
+      const newTask = {
+        id: Date.now(),
+        task: initial,
+        isDone: false
+      }
+      setNewData([...newData, newTask])
+      await AsyncStorage.setItem('newTodo', JSON.stringify(?))
+      setInitial('')
+      Keyboard.dismiss()
+
+    }
+
+}
   return (
     <View style={styles.container}>
       <View style={styles.headerCon}>
@@ -63,13 +83,14 @@ export default function App() {
         />
       </View>
       <FlatList
-        data={Data}
+        data={[...newData].reverse()}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) =>
           <View >
             <View style={styles.taskCon}>
               <Checkbox
                 value={item.isDone}
+                color={item.isDone ? 'purple' : undefined}
               />
               <View style={styles.textCon}>
                 <Text style={[styles.taskText, item.isDone && styles.completedTask]}>{item.task}</Text>
@@ -79,14 +100,20 @@ export default function App() {
           </View>
         }
       />
-      <View style={styles.addContainer}>
-        <TextInput
-          placeholder='enter your task'
-        />
-        <TouchableOpacity style={styles.addButton}>
-          <Ionicons name='add' size={24} color={'white'} />
-         </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView>
+        <View style={styles.addContainer}>
+          <TextInput
+            placeholder='enter your task'
+            value={initial}
+            onChangeText={setInitial}
+            style={styles.addInput}
+            autoCorrect={false}
+          />
+          <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
+            <Ionicons name='add' size={24} color={'white'} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
       <StatusBar style="auto" />
     </View>
   );
@@ -130,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginVertical: 10,
-    alignItems:'center'
+    alignItems: 'center'
   },
   taskText: {
     fontSize: 18
@@ -139,16 +166,19 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:'center'
+    alignItems: 'center'
   },
-  addButton:{
-    backgroundColor:'purple',
-    paddingVertical:15,
-    paddingHorizontal:15,
-    borderRadius:20
+  addButton: {
+    backgroundColor: 'purple',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderRadius: 20
   },
-  addContainer:{
-    flexDirection:'row',
-    justifyContent:'space-between'
+  addContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  addInput: {
+    flex: 1
   }
 });
