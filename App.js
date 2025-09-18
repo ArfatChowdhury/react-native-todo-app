@@ -38,7 +38,8 @@ export default function App() {
 
   const [initial, setInitial] = useState('')
   const [newData, setNewData] = useState([])
-
+  const [oldData, setOldData] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
 
 
   const clearStorage = async () => {
@@ -51,38 +52,43 @@ export default function App() {
   }
 
 
-  useEffect(()=>{
-    const getTodos = async() =>{
+  useEffect(() => {
+    const getTodos = async () => {
       // clearStorage()
-      try{
+      try {
         const todos = await AsyncStorage.getItem('newTodo')
-        if(todos !== null) {
+        if (todos !== null) {
           setNewData(JSON.parse(todos))
+          setOldData(JSON.parse(todos))
         }
         else {
           await AsyncStorage.setItem('newTodo', JSON.stringify(Data));
           setNewData(Data);
+          setOldData(Data);
         }
       }
-      catch(error){
+      catch (error) {
         console.log(error);
-        
+
       }
     }
     getTodos()
-  },[])
+  }, [])
 
 
-  const handleDelete = async(id) => {
-    try{
+  const handleDelete = async (id) => {
+    try {
       const newTodo = newData.filter((item) => item.id !== id)
       await AsyncStorage.setItem('newTodo', JSON.stringify(newTodo))
       setNewData(newTodo)
-    }catch(error){
+      setOldData(newTodo)
+
+      Alert.alert(`${id} deleted`)
+    } catch (error) {
       console.log(error);
-      
+
     }
-    
+
   }
   const handleAddTask = async () => {
 
@@ -96,6 +102,7 @@ export default function App() {
       }
       const updatedData = [...newData, newTask]
       setNewData(updatedData)
+      setOldData(updatedData)
       await AsyncStorage.setItem('newTodo', JSON.stringify(updatedData))
       setInitial('')
       Keyboard.dismiss()
@@ -106,6 +113,37 @@ export default function App() {
     }
 
   }
+  const handleDone = async (id) => {
+    try {
+      const updatedData = newData.map((item) => {
+        if (item.id === id) {
+
+          return { ...item, isDone: !item.isDone };
+        }
+        return item;
+      });
+      setNewData(updatedData);
+      setOldData(updatedData);
+      await AsyncStorage.setItem('newTodo', JSON.stringify(updatedData));
+
+    } catch (error) {
+      console.log('Error updating task:', error);
+    }
+  }
+  const onSearch = (query) => {
+    if (query == '') {
+      setNewData(oldData)
+    } else {
+
+      const filteredTodos = newData.filter((todo) => todo.task.toLowerCase().includes(query.toLowerCase())
+      )
+      setNewData(filteredTodos)
+    }
+  }
+
+  useEffect(() => {
+    onSearch(searchQuery)
+  }, [searchQuery])
   return (
     <View style={styles.container}>
       <View style={styles.headerCon}>
@@ -125,7 +163,10 @@ export default function App() {
         <Ionicons name="search" size={32} color="gray" style={styles.searchIcon} />
         <TextInput
           placeholder='Search your task'
+          value={searchQuery}
+          onChangeText={setSearchQuery}
           style={styles.input}
+          clearButtonMode='always'
         />
       </View>
       <FlatList
@@ -136,6 +177,7 @@ export default function App() {
             <View style={styles.taskCon}>
               <Checkbox
                 value={item.isDone}
+                onValueChange={() => handleDone(item.id)}
                 color={item.isDone ? 'purple' : undefined}
               />
               <View style={styles.textCon}>
